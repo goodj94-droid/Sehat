@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sehat">
+<meta name="theme-color" content="#2D4A3E">
+<title>Sehat — Diet & Olahraga</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  body { font-family: 'Manrope', system-ui, sans-serif; background: linear-gradient(180deg, #FAF6ED 0%, #F5EFE0 100%); -webkit-tap-highlight-color: transparent; }
+  .font-display { font-family: 'Fraunces', Georgia, serif; }
+  .num { font-variant-numeric: tabular-nums; }
+  .card { background: white; border: 1px solid rgba(45, 74, 62, 0.08); box-shadow: 0 1px 2px rgba(45, 74, 62, 0.04), 0 4px 12px rgba(45, 74, 62, 0.04); }
+  .accent { color: #C8633D; }
+  .bg-accent { background: #C8633D; }
+  .bg-primary { background: #2D4A3E; }
+  .text-primary { color: #2D4A3E; }
+  .border-primary { border-color: #2D4A3E; }
+  .bg-emerald-tint { background: rgba(45, 74, 62, 0.06); }
+  .scale-tap { transition: transform 0.1s; }
+  .scale-tap:active { transform: scale(0.97); }
+  input, select, button { font-family: inherit; }
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  /* Icon sizing */
+  .ico { display: inline-block; vertical-align: middle; }
+  /* Safe area */
+  .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 0.5rem); }
+</style>
+</head>
+<body class="text-stone-900">
+
+<div id="app" class="min-h-screen pb-28 max-w-lg mx-auto"></div>
+
+<!-- Install banner -->
+<div id="install-banner" class="hidden fixed top-3 left-3 right-3 z-50 max-w-lg mx-auto">
+  <div class="card rounded-2xl p-3 flex items-center gap-3 shadow-lg">
+    <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-display text-lg flex-shrink-0">S</div>
+    <div class="flex-1 min-w-0">
+      <p class="text-sm font-semibold leading-tight">Pasang sebagai app</p>
+      <p class="text-xs text-stone-500 leading-tight">Buka cepat dari home screen</p>
+    </div>
+    <button onclick="dismissInstall()" class="text-stone-400 px-2 py-1 text-xs">Nanti</button>
+    <button onclick="installApp()" class="bg-primary text-white text-xs font-semibold px-3 py-2 rounded-lg">Pasang</button>
+  </div>
+</div>
+
+<!-- iOS install hint -->
+<div id="ios-install-hint" class="hidden fixed top-3 left-3 right-3 z-50 max-w-lg mx-auto">
+  <div class="card rounded-2xl p-3 shadow-lg">
+    <div class="flex items-start gap-3">
+      <div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-display text-lg flex-shrink-0">S</div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold leading-tight">Pasang di iPhone</p>
+        <p class="text-xs text-stone-500 leading-snug mt-0.5">Tap tombol <strong>Share</strong> di Safari → pilih <strong>"Add to Home Screen"</strong></p>
+      </div>
+      <button onclick="dismissInstall()" class="text-stone-400 px-2 py-1 text-xs">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<nav id="tabbar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 pt-2 safe-bottom z-50">
+  <div class="max-w-lg mx-auto flex items-center justify-around"></div>
+</nav>
+
+<script>
+// =================== ICONS (inline SVG) ===================
+const I = {
+  home: '<svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  user: '<svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  utensils: '<svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>',
+  dumbbell: '<svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>',
+  trending: '<svg class="ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>',
+  flame: '<svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+  droplet: '<svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>',
+  target: '<svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+  sparkles: '<svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>',
+  plus: '<svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+  check: '<svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  x: '<svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+  chev: '<svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
+  alert: '<svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>',
+  award: '<svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"/><circle cx="12" cy="8" r="6"/></svg>',
+  moon: '<svg class="ico" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>',
+  activity: '<svg class="ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.5.5 0 0 1-.96 0L9.24 2.18a.5.5 0 0 0-.96 0l-2.35 8.36A2 2 0 0 1 4 12H2"/></svg>',
+  coffee: '<svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1"/><path d="M6 2v2"/></svg>',
+  sunset: '<svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10V2"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>',
+};
+
+// =================== DATA ===================
+const FOOD_DB = {
+  sarapan: { label: 'Sarapan', icon: I.coffee, target: 400, items: [
+    { name: 'Oatmeal + pisang + telur rebus', cal: 380, p: 18 },
+    { name: 'Nasi merah ½ + telur dadar + tumis kangkung', cal: 420, p: 20 },
+    { name: 'Roti gandum 2 lembar + alpukat + telur', cal: 410, p: 22 },
+    { name: 'Bubur ayam porsi kecil + telur rebus', cal: 400, p: 24 },
+    { name: 'Smoothie pisang-bayam + 2 telur rebus', cal: 360, p: 20 },
+  ]},
+  makanSiang: { label: 'Makan Siang', icon: I.utensils, target: 550, items: [
+    { name: 'Nasi merah ½ + ayam panggang + tumis bayam', cal: 550, p: 38 },
+    { name: 'Gado-gado (bumbu kacang sedikit)', cal: 480, p: 22 },
+    { name: 'Soto ayam tanpa nasi + telur + sayur', cal: 380, p: 32 },
+    { name: 'Salad sayur + dada ayam 150g panggang', cal: 420, p: 42 },
+    { name: 'Pecel sayur + tempe bacem + nasi merah ½', cal: 510, p: 24 },
+    { name: 'Sop ayam jagung + nasi merah ½', cal: 470, p: 30 },
+  ]},
+  makanMalam: { label: 'Makan Malam', icon: I.sunset, target: 480, items: [
+    { name: 'Ikan bakar + tumis brokoli + nasi merah ½', cal: 480, p: 36 },
+    { name: 'Sup ayam + sayuran + kentang rebus', cal: 420, p: 30 },
+    { name: 'Tempe-tahu bacem + tumis sayur + nasi merah ½', cal: 460, p: 22 },
+    { name: 'Capcay ayam + nasi merah ½', cal: 440, p: 28 },
+    { name: 'Pepes ikan + sayur asem + nasi merah ½', cal: 450, p: 32 },
+  ]},
+  snack: { label: 'Camilan', icon: I.sparkles, target: 150, items: [
+    { name: 'Apel / pir', cal: 80, p: 0 },
+    { name: 'Yogurt plain 150ml', cal: 100, p: 8 },
+    { name: 'Almond segenggam (20g)', cal: 120, p: 4 },
+    { name: 'Pisang', cal: 90, p: 1 },
+    { name: 'Telur rebus 1 butir', cal: 70, p: 6 },
+    { name: 'Ubi rebus 100g', cal: 86, p: 1 },
+  ]},
+};
+
+const EXERCISE_PHASES = [
+  { weeks: '1–2', title: 'Fase Adaptasi', desc: 'Bangun kebiasaan & adaptasi sendi-otot. Low impact, fokus konsistensi.', sessions: [
+    { day: 'Senin', items: ['Jalan kaki 20 menit (kecepatan santai)', 'Peregangan 10 menit'], cal: 120 },
+    { day: 'Selasa', items: ['Istirahat aktif: peregangan ringan 10 menit'], cal: 30 },
+    { day: 'Rabu', items: ['Jalan kaki 25 menit', 'Wall push-up 2×10', 'Chair squat 2×10'], cal: 160 },
+    { day: 'Kamis', items: ['Istirahat penuh'], cal: 0 },
+    { day: 'Jumat', items: ['Jalan kaki 30 menit', 'Peregangan 10 menit'], cal: 180 },
+    { day: 'Sabtu', items: ['Glute bridge 2×12', 'Wall push-up 2×12', 'Plank 2×20 detik'], cal: 110 },
+    { day: 'Minggu', items: ['Jalan rekreasi 30–40 menit'], cal: 220 },
+  ]},
+  { weeks: '3–4', title: 'Fase Bangun Fondasi', desc: 'Naikkan durasi & tambah latihan kekuatan ringan.', sessions: [
+    { day: 'Senin', items: ['Jalan cepat 30 menit', 'Squat 3×12', 'Push-up lutut 3×10'], cal: 240 },
+    { day: 'Selasa', items: ['Jalan santai 30 menit'], cal: 150 },
+    { day: 'Rabu', items: ['Sirkuit: Squat, Push-up, Glute bridge, Plank (3 putaran)'], cal: 220 },
+    { day: 'Kamis', items: ['Istirahat / peregangan'], cal: 30 },
+    { day: 'Jumat', items: ['Jalan cepat 35 menit', 'Plank 3×30 detik'], cal: 260 },
+    { day: 'Sabtu', items: ['Sirkuit bodyweight 3 putaran + stretching'], cal: 240 },
+    { day: 'Minggu', items: ['Jalan + bersepeda santai 45 menit'], cal: 300 },
+  ]},
+  { weeks: '5–8', title: 'Fase Progres', desc: 'Kombinasi kardio interval + kekuatan progresif.', sessions: [
+    { day: 'Senin', items: ['Interval jalan cepat-pelan 35 menit', 'Squat 4×12'], cal: 300 },
+    { day: 'Selasa', items: ['Bodyweight strength: Squat, Push-up, Row, Plank, Lunge (4 putaran)'], cal: 280 },
+    { day: 'Rabu', items: ['Kardio steady-state 40 menit'], cal: 340 },
+    { day: 'Kamis', items: ['Istirahat aktif'], cal: 50 },
+    { day: 'Jumat', items: ['Bodyweight strength + core circuit'], cal: 300 },
+    { day: 'Sabtu', items: ['Kardio 45 menit + stretching'], cal: 360 },
+    { day: 'Minggu', items: ['Aktivitas rekreasi: hiking ringan / berenang / jalan jauh'], cal: 320 },
+  ]},
+];
+
+const TIPS = [
+  'Air putih 8 gelas/hari. Sering kali rasa "lapar" itu sebenarnya dehidrasi.',
+  'Tidur 7–8 jam menjaga hormon leptin & ghrelin—kunci kontrol nafsu makan.',
+  'Protein 1.6 g/kg berat target (~112 g) menjaga massa otot saat defisit kalori.',
+  'Defisit 500 kkal/hari = sekitar 0,5 kg/minggu. Lebih sehat dari diet ekstrem.',
+  'Latihan kekuatan menjaga BMR tetap tinggi—jadi tidak gampang "rebound".',
+  'Makan perlahan. Otak butuh ~20 menit menerima sinyal kenyang.',
+  'Jalan 10 menit setelah makan = bantu kontrol gula darah & cerna.',
+  'Timbang badan 1× per minggu di waktu sama (pagi setelah BAK), jangan harian.',
+];
+
+const ACTIVITY_LEVELS = [
+  { value: 1.2, label: 'Tidak aktif', desc: 'Duduk sepanjang hari, jarang olahraga' },
+  { value: 1.375, label: 'Aktivitas ringan', desc: 'Olahraga ringan 1–3×/minggu' },
+  { value: 1.55, label: 'Aktivitas sedang', desc: 'Olahraga sedang 3–5×/minggu' },
+  { value: 1.725, label: 'Aktif', desc: 'Olahraga intens 6–7×/minggu' },
+];
+
+// =================== STATE ===================
+const state = {
+  profile: { name: 'Leo', weight: 100, height: 173, age: 35, gender: 'pria', activity: 1.375, targetWeight: 70, startDate: today(), startWeight: 100 },
+  logs: {},
+  tab: 'beranda',
+  phaseIdx: 0,
+  openCat: null,
+};
+
+// =================== STORAGE ===================
+function loadState() {
+  try { const p = localStorage.getItem('sehat_profile'); if (p) state.profile = { ...state.profile, ...JSON.parse(p) }; } catch(e) {}
+  try { const l = localStorage.getItem('sehat_logs'); if (l) state.logs = JSON.parse(l); } catch(e) {}
+}
+function saveProfile() { try { localStorage.setItem('sehat_profile', JSON.stringify(state.profile)); } catch(e) {} }
+function saveLogs() { try { localStorage.setItem('sehat_logs', JSON.stringify(state.logs)); } catch(e) {} }
+
+// =================== HELPERS ===================
+function today() { return new Date().toISOString().slice(0, 10); }
+function fmtDate(d) {
+  const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  const dt = new Date(d);
+  return `${days[dt.getDay()]}, ${dt.getDate()} ${months[dt.getMonth()]}`;
+}
+function calcBMI(w, h) { return w / Math.pow(h/100, 2); }
+function bmiCategory(bmi) {
+  if (bmi < 18.5) return { label: 'Kurus', color: 'text-sky-700', bg: 'bg-sky-100' };
+  if (bmi < 25) return { label: 'Ideal', color: 'text-emerald-700', bg: 'bg-emerald-100' };
+  if (bmi < 30) return { label: 'Berlebih', color: 'text-amber-700', bg: 'bg-amber-100' };
+  if (bmi < 35) return { label: 'Obesitas I', color: 'text-orange-700', bg: 'bg-orange-100' };
+  return { label: 'Obesitas II+', color: 'text-red-700', bg: 'bg-red-100' };
+}
+function calcBMR(w, h, age, gender) {
+  return gender === 'pria' ? 10*w + 6.25*h - 5*age + 5 : 10*w + 6.25*h - 5*age - 161;
+}
+function calcStats() {
+  const p = state.profile;
+  const bmi = calcBMI(p.weight, p.height);
+  const bmr = calcBMR(p.weight, p.height, p.age, p.gender);
+  const tdee = bmr * p.activity;
+  const targetCal = Math.round(tdee - 500);
+  const idealWeight = Math.round(22 * Math.pow(p.height/100, 2) * 10) / 10;
+  const toLose = Math.max(0, p.weight - p.targetWeight);
+  const lostSoFar = Math.max(0, p.startWeight - p.weight);
+  const totalToLose = p.startWeight - p.targetWeight;
+  const progressPct = totalToLose > 0 ? Math.min(100, (lostSoFar/totalToLose)*100) : 0;
+  const weeksToTarget = Math.ceil(toLose / 0.5);
+  return { bmi, bmr: Math.round(bmr), tdee: Math.round(tdee), targetCal, idealWeight, toLose, lostSoFar, progressPct, weeksToTarget };
+}
+function getTodayLog() {
+  return state.logs[today()] || { meals: [], exercises: [], water: 0 };
+}
+function updateTodayLog(fn) {
+  const d = today();
+  state.logs[d] = fn(state.logs[d] || { meals: [], exercises: [], water: 0 });
+  saveLogs();
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// =================== RENDER ===================
+function render() {
+  const app = document.getElementById('app');
+  const stats = calcStats();
+  app.innerHTML = renderHeader() + renderTab(stats);
+  document.querySelector('#tabbar > div').innerHTML = renderTabBar();
+  if (state.tab === 'progress') setTimeout(renderChart, 50);
+}
+
+function renderHeader() {
+  const p = state.profile;
+  return `
+    <header class="px-5 pt-7 pb-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-stone-500 font-medium">${fmtDate(today())}</p>
+          <h1 class="font-display text-3xl font-semibold mt-1 leading-tight text-primary">Halo, ${escapeHtml(p.name)}</h1>
+        </div>
+        <div class="w-11 h-11 rounded-full bg-primary flex items-center justify-center text-white font-display text-lg">${escapeHtml(p.name[0] || 'U')}</div>
+      </div>
+    </header>`;
+}
+
+function renderTab(stats) {
+  const wrap = (content) => `<main class="px-5 space-y-5">${content}</main>`;
+  if (state.tab === 'beranda') return wrap(renderBeranda(stats));
+  if (state.tab === 'profil') return wrap(renderProfil(stats));
+  if (state.tab === 'diet') return wrap(renderDiet(stats));
+  if (state.tab === 'olahraga') return wrap(renderOlahraga());
+  if (state.tab === 'progress') return wrap(renderProgress(stats));
+  return '';
+}
+
+function renderTabBar() {
+  const tabs = [
+    { id: 'beranda', label: 'Beranda', icon: I.home },
+    { id: 'diet', label: 'Diet', icon: I.utensils },
+    { id: 'olahraga', label: 'Olahraga', icon: I.dumbbell },
+    { id: 'progress', label: 'Progres', icon: I.trending },
+    { id: 'profil', label: 'Profil', icon: I.user },
+  ];
+  return tabs.map(t => `
+    <button onclick="setTab('${t.id}')" class="flex flex-col items-center gap-1 py-1 px-3 rounded-xl scale-tap ${state.tab===t.id?'text-primary':'text-stone-400'}">
+      ${t.icon}
+      <span class="text-[10px] font-medium tracking-wide">${t.label}</span>
+    </button>`).join('');
+}
+
+function renderBeranda(stats) {
+  const log = getTodayLog();
+  const cal = log.meals.reduce((s,m)=>s+m.cal,0);
+  const protein = log.meals.reduce((s,m)=>s+m.p,0);
+  const burned = log.exercises.filter(e=>e.done).reduce((s,e)=>s+e.cal,0);
+  const cat = bmiCategory(stats.bmi);
+  const calRem = stats.targetCal - cal;
+  const pctCal = Math.min(100, (cal/stats.targetCal)*100);
+  const tip = TIPS[new Date().getDate() % TIPS.length];
+  const dasharray = (pctCal/100)*213.6;
+
+  return `
+    <!-- Hero BMI -->
+    <div class="card rounded-3xl p-6">
+      <div class="flex items-start justify-between mb-5">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-stone-500 font-medium">Status saat ini</p>
+          <div class="flex items-baseline gap-2 mt-1">
+            <span class="font-display text-5xl font-semibold num text-primary">${stats.bmi.toFixed(1)}</span>
+            <span class="text-sm text-stone-500">BMI</span>
+          </div>
+        </div>
+        <span class="px-3 py-1.5 rounded-full text-xs font-semibold ${cat.bg} ${cat.color}">${cat.label}</span>
+      </div>
+      <div class="grid grid-cols-3 gap-3 pt-4 border-t border-stone-100">
+        ${stat('Berat', state.profile.weight, 'kg')}
+        ${stat('Tinggi', state.profile.height, 'cm')}
+        ${stat('Target', state.profile.targetWeight, 'kg', true)}
+      </div>
+    </div>
+
+    <!-- Today summary -->
+    <div class="card rounded-3xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display text-xl font-semibold">Hari Ini</h2>
+        <button onclick="setTab('diet')" class="text-xs text-primary font-semibold flex items-center gap-1">Detail ${I.chev}</button>
+      </div>
+      <div class="bg-stone-50 rounded-2xl p-4 mb-3">
+        <div class="flex items-center gap-4">
+          <div class="relative w-20 h-20 flex-shrink-0">
+            <svg class="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="34" stroke="#E7E2D6" stroke-width="6" fill="none"/>
+              <circle cx="40" cy="40" r="34" stroke="#2D4A3E" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="${dasharray} 213.6"/>
+            </svg>
+            <div class="absolute inset-0 flex items-center justify-center text-primary">${I.flame}</div>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs uppercase tracking-widest text-stone-500 font-medium">Kalori</p>
+            <p class="font-display text-2xl font-semibold num">${cal} <span class="text-stone-400 text-base">/ ${stats.targetCal}</span></p>
+            <p class="text-xs text-stone-500 mt-0.5">${calRem>0?`Sisa ${calRem} kkal`:`Lebih ${Math.abs(calRem)} kkal`}</p>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        ${miniStat(I.droplet, 'Air', `${log.water}/8`, 'gls', 'text-sky-600')}
+        ${miniStat(I.activity, 'Protein', protein, 'g', 'text-emerald-700')}
+        ${miniStat(I.dumbbell, 'Bakar', burned, 'kkal', 'text-orange-600')}
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="card rounded-3xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-display text-xl font-semibold">Progres ke Target</h2>
+        <span class="text-xs text-stone-500 num">${stats.lostSoFar.toFixed(1)} kg turun</span>
+      </div>
+      <div class="relative h-3 bg-stone-100 rounded-full overflow-hidden mb-3">
+        <div class="absolute inset-y-0 left-0 bg-primary rounded-full transition-all" style="width:${stats.progressPct}%"></div>
+      </div>
+      <div class="flex items-center justify-between text-sm">
+        <span class="text-stone-500 num">${state.profile.startWeight} kg</span>
+        <span class="font-semibold text-primary num">${stats.progressPct.toFixed(0)}%</span>
+        <span class="text-stone-500 num">${state.profile.targetWeight} kg</span>
+      </div>
+      ${stats.toLose > 0 ? `
+      <div class="mt-4 pt-4 border-t border-stone-100 text-sm text-stone-600 flex items-center gap-2">
+        <span class="accent flex-shrink-0">${I.target}</span>
+        <span>Sisa <strong class="num text-stone-900">${stats.toLose.toFixed(1)} kg</strong> · estimasi <strong class="num text-stone-900">${stats.weeksToTarget} minggu</strong></span>
+      </div>` : ''}
+    </div>
+
+    <!-- Tip -->
+    <div class="rounded-3xl p-5 bg-primary">
+      <div class="flex items-start gap-3">
+        <div class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-white">${I.sparkles}</div>
+        <div>
+          <p class="text-xs uppercase tracking-widest text-white/60 font-medium mb-1">Tip hari ini</p>
+          <p class="text-white text-sm leading-relaxed">${tip}</p>
+        </div>
+      </div>
+    </div>`;
+}
+
+function stat(label, value, unit, accent) {
+  return `<div>
+    <p class="text-[10px] uppercase tracking-widest text-stone-500 font-medium">${label}</p>
+    <p class="font-display text-2xl font-semibold num mt-0.5 ${accent?'accent':'text-stone-900'}">${value} <span class="text-stone-400 text-sm font-normal">${unit}</span></p>
+  </div>`;
+}
+function miniStat(icon, label, value, unit, color) {
+  return `<div class="bg-stone-50 rounded-xl p-3">
+    <span class="${color}">${icon}</span>
+    <p class="text-[10px] uppercase tracking-widest text-stone-500 font-medium mt-1.5">${label}</p>
+    <p class="font-display text-base font-semibold num text-stone-900">${value} <span class="text-stone-400 text-[10px] font-normal">${unit}</span></p>
+  </div>`;
+}
+
+function renderProfil(stats) {
+  const p = state.profile;
+  return `
+    <div class="card rounded-3xl p-5">
+      <h2 class="font-display text-xl font-semibold mb-4">Data Diri</h2>
+      <div class="space-y-3">
+        ${field('Nama', 'name', p.name, 'text')}
+        <div class="grid grid-cols-2 gap-3">
+          ${field('Umur', 'age', p.age, 'number', 'th')}
+          ${selectField('Jenis kelamin', 'gender', p.gender, ['pria','wanita'])}
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          ${field('Berat', 'weight', p.weight, 'number', 'kg')}
+          ${field('Tinggi', 'height', p.height, 'number', 'cm')}
+        </div>
+        ${field('Target berat', 'targetWeight', p.targetWeight, 'number', 'kg')}
+      </div>
+    </div>
+
+    <div class="card rounded-3xl p-5">
+      <h3 class="font-display text-lg font-semibold mb-3">Tingkat Aktivitas</h3>
+      <div class="space-y-2">
+        ${ACTIVITY_LEVELS.map(a => `
+          <button onclick="updateProfile('activity', ${a.value})" class="w-full text-left p-3 rounded-xl border transition scale-tap ${p.activity===a.value?'border-primary bg-emerald-tint':'border-stone-200'}">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-sm">${a.label}</span>
+              ${p.activity===a.value?`<span class="text-primary">${I.check}</span>`:''}
+            </div>
+            <p class="text-xs text-stone-500 mt-0.5">${a.desc}</p>
+          </button>`).join('')}
+      </div>
+    </div>
+
+    <div class="card rounded-3xl p-5">
+      <h3 class="font-display text-lg font-semibold mb-4">Hasil Perhitungan</h3>
+      <div class="space-y-3">
+        ${row('BMR (kalori basal)', stats.bmr+' kkal', 'Kebutuhan saat istirahat')}
+        ${row('TDEE (total harian)', stats.tdee+' kkal', 'Pemeliharaan berat')}
+        ${row('Target kalori', stats.targetCal+' kkal', 'Defisit 500 kkal · turun ~0.5 kg/minggu', true)}
+        ${row('Berat ideal (BMI 22)', stats.idealWeight+' kg', 'Rekomendasi sehat')}
+      </div>
+    </div>
+
+    <div class="rounded-3xl p-5 border border-amber-200 bg-amber-50/50">
+      <div class="flex gap-3">
+        <span class="text-amber-700 flex-shrink-0 mt-0.5">${I.alert}</span>
+        <div class="text-sm text-amber-900 leading-relaxed">
+          <strong>Catatan:</strong> Perhitungan ini estimasi. Untuk kondisi medis tertentu (hipertensi, diabetes, dll), konsultasikan dokter atau ahli gizi sebelum mulai program.
+        </div>
+      </div>
+    </div>`;
+}
+
+function field(label, key, value, type, unit) {
+  return `<div>
+    <label class="text-[10px] uppercase tracking-widest text-stone-500 font-medium">${label}</label>
+    <div class="relative">
+      <input type="${type}" value="${escapeHtml(value)}" onchange="updateProfile('${key}', this.${type==='number'?'valueAsNumber':'value'})" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-stone-200 bg-white focus:outline-none focus:border-primary text-sm font-semibold num">
+      ${unit?`<span class="absolute right-3 top-1/2 mt-0.5 -translate-y-1/2 text-xs text-stone-400">${unit}</span>`:''}
+    </div>
+  </div>`;
+}
+function selectField(label, key, value, options) {
+  return `<div>
+    <label class="text-[10px] uppercase tracking-widest text-stone-500 font-medium">${label}</label>
+    <select onchange="updateProfile('${key}', this.value)" class="w-full mt-1 px-3 py-2.5 rounded-xl border border-stone-200 bg-white focus:outline-none focus:border-primary text-sm font-medium">
+      ${options.map(o => `<option value="${o}" ${value===o?'selected':''}>${o}</option>`).join('')}
+    </select>
+  </div>`;
+}
+function row(label, value, hint, highlight) {
+  return `<div class="flex items-start justify-between py-2 ${highlight?'-mx-2 px-3 py-3 bg-emerald-tint rounded-xl':''}">
+    <div>
+      <p class="text-sm ${highlight?'font-semibold text-primary':'text-stone-700'}">${label}</p>
+      ${hint?`<p class="text-xs text-stone-500 mt-0.5">${hint}</p>`:''}
+    </div>
+    <span class="font-display text-lg font-semibold num ${highlight?'text-primary':'text-stone-900'}">${value}</span>
+  </div>`;
+}
+
+function renderDiet(stats) {
+  const log = getTodayLog();
+  const cal = log.meals.reduce((s,m)=>s+m.cal,0);
+  const protein = log.meals.reduce((s,m)=>s+m.p,0);
+  const proteinTarget = Math.round(stats.targetCal * 0.3 / 4);
+
+  let html = `
+    <div class="card rounded-3xl p-5">
+      <h2 class="font-display text-xl font-semibold mb-4">Target Hari Ini</h2>
+      ${progressBar('Kalori', cal, stats.targetCal, 'kkal', '#2D4A3E')}
+      <div class="h-3"></div>
+      ${progressBar('Protein', protein, proteinTarget, 'g', '#C8633D')}
+    </div>
+
+    <div class="card rounded-3xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-display text-xl font-semibold flex items-center gap-2">
+          <span class="text-sky-600">${I.droplet}</span> Minum Air
+        </h2>
+        <span class="text-sm text-stone-500 num">${log.water}/8 gelas</span>
+      </div>
+      <div class="flex items-center gap-1.5 mb-3">
+        ${Array.from({length:8},(_, i) => `<div class="flex-1 h-10 rounded-lg ${i<log.water?'bg-sky-400':'bg-stone-100'}"></div>`).join('')}
+      </div>
+      <div class="flex gap-2">
+        <button onclick="toggleWater(-1)" class="flex-1 py-2.5 rounded-xl border border-stone-200 text-sm font-medium text-stone-600 scale-tap">− Kurangi</button>
+        <button onclick="toggleWater(1)" class="flex-1 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold scale-tap">+ Tambah</button>
+      </div>
+    </div>`;
+
+  for (const [key, cat] of Object.entries(FOOD_DB)) {
+    const eaten = log.meals.filter(m=>m.cat===key);
+    const eatenCal = eaten.reduce((s,m)=>s+m.cal,0);
+    const isOpen = state.openCat === key;
+    html += `
+      <div class="card rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-primary">${cat.icon}</div>
+            <div>
+              <h3 class="font-display text-lg font-semibold">${cat.label}</h3>
+              <p class="text-xs text-stone-500 num">${eatenCal} / ${cat.target} kkal</p>
+            </div>
+          </div>
+          <button onclick="toggleCat('${key}')" class="w-9 h-9 rounded-full bg-primary text-white flex items-center justify-center scale-tap" style="${isOpen?'transform:rotate(45deg)':''}">${I.plus}</button>
+        </div>
+        ${eaten.length > 0 ? `
+          <div class="space-y-2 mb-3">
+            ${eaten.map(m => `
+              <div class="flex items-center justify-between bg-emerald-tint rounded-xl px-3 py-2.5">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium truncate">${escapeHtml(m.name)}</p>
+                  <p class="text-xs text-stone-500 num">${m.cal} kkal · ${m.p}g protein</p>
+                </div>
+                <button onclick="removeMeal(${m.id})" class="ml-2 text-stone-400">${I.x}</button>
+              </div>`).join('')}
+          </div>` : ''}
+        ${isOpen ? `
+          <div class="space-y-2 mt-2 pt-2 border-t border-stone-100">
+            ${cat.items.map((item, i) => `
+              <button onclick="addMeal('${key}', ${i})" class="w-full text-left px-3 py-2.5 rounded-xl scale-tap flex items-center justify-between">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium truncate">${escapeHtml(item.name)}</p>
+                  <p class="text-xs text-stone-500 num">${item.cal} kkal · ${item.p}g protein</p>
+                </div>
+                <span class="text-primary ml-2">${I.plus}</span>
+              </button>`).join('')}
+          </div>` : ''}
+      </div>`;
+  }
+  return html;
+}
+
+function progressBar(label, current, target, unit, color) {
+  const pct = Math.min(100, (current/target)*100);
+  return `<div>
+    <div class="flex justify-between items-baseline mb-1.5">
+      <span class="text-sm font-medium text-stone-700">${label}</span>
+      <span class="text-sm num"><strong class="text-stone-900">${current}</strong><span class="text-stone-400"> / ${target} ${unit}</span></span>
+    </div>
+    <div class="h-2.5 bg-stone-100 rounded-full overflow-hidden">
+      <div class="h-full rounded-full transition-all" style="width:${pct}%;background:${color}"></div>
+    </div>
+  </div>`;
+}
+
+function renderOlahraga() {
+  const phase = EXERCISE_PHASES[state.phaseIdx];
+  const todayDay = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][new Date().getDay()];
+  const todaySession = phase.sessions.find(s => s.day === todayDay) || phase.sessions[0];
+  const log = getTodayLog();
+  const completed = log.exercises.filter(e=>e.done).map(e=>e.name);
+  const isRest = todaySession.items[0].toLowerCase().includes('istirahat');
+
+  return `
+    <div class="card rounded-3xl p-5">
+      <h2 class="font-display text-xl font-semibold mb-1">${phase.title}</h2>
+      <p class="text-xs uppercase tracking-widest text-stone-500 font-medium">Minggu ${phase.weeks}</p>
+      <p class="text-sm text-stone-600 mt-2 leading-relaxed">${phase.desc}</p>
+      <div class="flex gap-2 mt-4">
+        ${EXERCISE_PHASES.map((p, i) => `
+          <button onclick="setPhase(${i})" class="flex-1 py-2 rounded-xl text-xs font-semibold scale-tap ${state.phaseIdx===i?'bg-primary text-white':'bg-stone-100 text-stone-600'}">${p.weeks}</button>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="card rounded-3xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="text-xs uppercase tracking-widest text-stone-500 font-medium">Sesi ${todayDay}</p>
+          <h3 class="font-display text-xl font-semibold mt-0.5">Latihan Hari Ini</h3>
+        </div>
+        <div class="flex items-center gap-1.5 text-sm">
+          <span class="text-orange-500">${I.flame}</span>
+          <span class="num font-semibold">${todaySession.cal}</span>
+          <span class="text-stone-400 text-xs">kkal</span>
+        </div>
+      </div>
+      ${isRest ? `
+        <div class="text-center py-6 bg-amber-50/50 rounded-2xl">
+          <div class="text-amber-700 mx-auto mb-2 flex justify-center">${I.moon}</div>
+          <p class="text-sm font-medium text-amber-900">Hari Istirahat</p>
+          <p class="text-xs text-amber-700/80 mt-1">Recovery itu bagian dari progres</p>
+        </div>
+      ` : `
+        <div class="space-y-2">
+          ${todaySession.items.map((item, i) => {
+            const isDone = completed.includes(item);
+            const calPerItem = Math.round(todaySession.cal / todaySession.items.length);
+            return `
+              <button onclick="toggleExercise(${JSON.stringify(item).replace(/"/g,'&quot;')}, ${calPerItem})" class="w-full text-left p-3 rounded-xl border transition flex items-center gap-3 scale-tap ${isDone?'border-emerald-300 bg-emerald-50':'border-stone-200 bg-white'}">
+                <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isDone?'bg-primary text-white':'border-2 border-stone-300'}">${isDone?I.check:''}</div>
+                <span class="text-sm flex-1 ${isDone?'text-stone-500 line-through':'text-stone-800'}">${escapeHtml(item)}</span>
+              </button>`;
+          }).join('')}
+        </div>
+      `}
+    </div>
+
+    <div class="card rounded-3xl p-5">
+      <h3 class="font-display text-lg font-semibold mb-3">Jadwal Minggu Ini</h3>
+      <div class="space-y-2">
+        ${phase.sessions.map(s => {
+          const isToday = s.day === todayDay;
+          return `
+            <div class="flex items-start gap-3 p-3 rounded-xl ${isToday?'bg-emerald-50 border border-emerald-200':'bg-stone-50'}">
+              <div class="w-12 text-center rounded-lg py-1 px-2 text-xs font-semibold ${isToday?'bg-primary text-white':'bg-white text-stone-600'}">${s.day.slice(0,3)}</div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-stone-800 leading-snug">${escapeHtml(s.items[0])}</p>
+                ${s.items.length>1?`<p class="text-xs text-stone-500 mt-0.5 leading-snug">+ ${s.items.slice(1).map(escapeHtml).join(' · ')}</p>`:''}
+              </div>
+              <span class="text-xs text-stone-500 num flex-shrink-0">${s.cal} kkal</span>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function renderProgress(stats) {
+  const p = state.profile;
+  return `
+    <div class="grid grid-cols-3 gap-3">
+      <div class="card rounded-2xl p-4 text-center">
+        <p class="text-[10px] uppercase tracking-widest text-stone-500 font-medium">Awal</p>
+        <p class="font-display text-2xl font-semibold num mt-1 text-stone-900">${p.startWeight}</p>
+        <p class="text-[10px] text-stone-400">kg</p>
+      </div>
+      <div class="card rounded-2xl p-4 text-center" style="border-color:#2D4A3E;border-width:1.5px">
+        <p class="text-[10px] uppercase tracking-widest text-stone-500 font-medium">Saat ini</p>
+        <p class="font-display text-2xl font-semibold num mt-1 text-primary">${p.weight}</p>
+        <p class="text-[10px] text-stone-400">kg</p>
+      </div>
+      <div class="card rounded-2xl p-4 text-center">
+        <p class="text-[10px] uppercase tracking-widest text-stone-500 font-medium">Target</p>
+        <p class="font-display text-2xl font-semibold num mt-1 accent">${p.targetWeight}</p>
+        <p class="text-[10px] text-stone-400">kg</p>
+      </div>
+    </div>
+
+    <div class="card rounded-3xl p-5">
+      <h2 class="font-display text-xl font-semibold mb-3">Catat Berat Hari Ini</h2>
+      <div class="flex items-center gap-3">
+        <div class="flex-1 relative">
+          <input id="weight-input" type="number" step="0.1" value="${p.weight}" class="w-full px-4 py-3 rounded-xl border border-stone-200 bg-white focus:outline-none focus:border-primary text-lg font-display font-semibold num">
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-stone-400">kg</span>
+        </div>
+        <button onclick="logWeight()" class="px-5 py-3 rounded-xl bg-primary text-white text-sm font-semibold scale-tap">Simpan</button>
+      </div>
+      <p class="text-xs text-stone-500 mt-3">Tip: timbang di pagi hari setelah BAK & sebelum makan, untuk konsistensi.</p>
+    </div>
+
+    <div class="card rounded-3xl p-5">
+      <h2 class="font-display text-xl font-semibold mb-1">Grafik Berat Badan</h2>
+      <p class="text-xs text-stone-500 mb-4">Perjalananmu menuju ${p.targetWeight} kg</p>
+      <div class="h-56 relative"><canvas id="weight-chart"></canvas></div>
+    </div>
+
+    ${stats.lostSoFar > 0 ? `
+      <div class="rounded-3xl p-5 bg-primary">
+        <div class="flex items-center gap-3">
+          <span class="text-amber-300">${I.award}</span>
+          <div>
+            <p class="font-display text-2xl font-semibold text-white">${stats.lostSoFar.toFixed(1)} kg <span class="text-base font-normal text-white/70">turun</span></p>
+            <p class="text-xs text-white/70 mt-0.5">${stats.progressPct.toFixed(0)}% menuju target. Konsistensi membayar.</p>
+          </div>
+        </div>
+      </div>` : ''}
+
+    <div class="card rounded-3xl p-5">
+      <h3 class="font-display text-lg font-semibold mb-3 text-stone-700">Pengaturan Data</h3>
+      <button onclick="resetData()" class="text-xs text-red-600 font-medium scale-tap">Reset semua data (hati-hati!)</button>
+    </div>`;
+}
+
+// =================== CHART ===================
+let chartInstance = null;
+function renderChart() {
+  const canvas = document.getElementById('weight-chart');
+  if (!canvas) return;
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  const entries = Object.entries(state.logs)
+    .filter(([_, l]) => l.weight)
+    .map(([date, l]) => ({ date, weight: l.weight }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const seen = new Map();
+  seen.set(state.profile.startDate, { date: state.profile.startDate, weight: state.profile.startWeight });
+  entries.forEach(e => seen.set(e.date, e));
+  const data = Array.from(seen.values()).sort((a,b) => a.date.localeCompare(b.date));
+
+  if (data.length < 2) {
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#A8A29E';
+    ctx.font = '13px Manrope';
+    ctx.textAlign = 'center';
+    ctx.fillText('Catat beratmu untuk melihat grafik', canvas.width/2, canvas.height/2);
+    return;
+  }
+
+  const labels = data.map(d => fmtDate(d.date).split(', ')[1]);
+  const values = data.map(d => d.weight);
+  const target = state.profile.targetWeight;
+
+  chartInstance = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Berat',
+          data: values,
+          borderColor: '#2D4A3E',
+          backgroundColor: (ctx) => {
+            const c = ctx.chart.ctx;
+            const g = c.createLinearGradient(0, 0, 0, 220);
+            g.addColorStop(0, 'rgba(45, 74, 62, 0.3)');
+            g.addColorStop(1, 'rgba(45, 74, 62, 0)');
+            return g;
+          },
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: '#2D4A3E',
+        },
+        {
+          label: 'Target',
+          data: Array(values.length).fill(target),
+          borderColor: '#C8633D',
+          borderDash: [4, 4],
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'white',
+          titleColor: '#1F1B16',
+          bodyColor: '#1F1B16',
+          borderColor: '#E7E2D6',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 12,
+          displayColors: false,
+          callbacks: { label: (ctx) => `${ctx.parsed.y} kg` }
+        }
+      },
+      scales: {
+        x: { grid: { color: '#E7E2D6' }, ticks: { color: '#A8A29E', font: { size: 11 } } },
+        y: { grid: { color: '#E7E2D6' }, ticks: { color: '#A8A29E', font: { size: 11 } }, suggestedMin: Math.min(...values, target) - 2, suggestedMax: Math.max(...values, target) + 2 }
+      }
+    }
+  });
+}
+
+// =================== ACTIONS ===================
+function setTab(tab) { state.tab = tab; state.openCat = null; render(); window.scrollTo(0,0); }
+function setPhase(idx) { state.phaseIdx = idx; render(); }
+function toggleCat(key) { state.openCat = state.openCat === key ? null : key; render(); }
+function updateProfile(key, value) { state.profile[key] = value; saveProfile(); render(); }
+function addMeal(catKey, itemIdx) {
+  const item = FOOD_DB[catKey].items[itemIdx];
+  updateTodayLog(log => ({ ...log, meals: [...log.meals, { ...item, cat: catKey, id: Date.now() + Math.random() }] }));
+  state.openCat = null;
+  render();
+}
+function removeMeal(id) {
+  updateTodayLog(log => ({ ...log, meals: log.meals.filter(m => m.id !== id) }));
+  render();
+}
+function toggleWater(delta) {
+  updateTodayLog(log => ({ ...log, water: Math.max(0, Math.min(12, log.water + delta)) }));
+  render();
+}
+function logWeight() {
+  const input = document.getElementById('weight-input');
+  const w = Number(input.value);
+  if (!w || w < 30 || w > 300) { alert('Berat tidak valid (30–300 kg)'); return; }
+  updateTodayLog(log => ({ ...log, weight: w }));
+  state.profile.weight = w;
+  saveProfile();
+  render();
+}
+function toggleExercise(name, cal) {
+  updateTodayLog(log => {
+    const exists = log.exercises.find(e => e.name === name);
+    if (exists) return { ...log, exercises: log.exercises.map(e => e.name === name ? { ...e, done: !e.done } : e) };
+    return { ...log, exercises: [...log.exercises, { name, cal, done: true }] };
+  });
+  render();
+}
+function resetData() {
+  if (!confirm('Yakin reset semua data? Tidak bisa dikembalikan.')) return;
+  if (!confirm('Sekali lagi: SEMUA log makanan, olahraga, & berat akan terhapus. Lanjut?')) return;
+  localStorage.removeItem('sehat_profile');
+  localStorage.removeItem('sehat_logs');
+  state.profile = { name: 'Leo', weight: 100, height: 173, age: 35, gender: 'pria', activity: 1.375, targetWeight: 70, startDate: today(), startWeight: 100 };
+  state.logs = {};
+  state.tab = 'beranda';
+  render();
+}
+
+// =================== INIT ===================
+loadState();
+render();
+
+// =================== PWA: Service Worker & Install ===================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(err => console.log('SW reg failed:', err));
+  });
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem('sehat_install_dismissed')) {
+    document.getElementById('install-banner').classList.remove('hidden');
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').classList.add('hidden');
+  document.getElementById('ios-install-hint').classList.add('hidden');
+  deferredPrompt = null;
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    document.getElementById('install-banner').classList.add('hidden');
+  });
+}
+
+function dismissInstall() {
+  document.getElementById('install-banner').classList.add('hidden');
+  document.getElementById('ios-install-hint').classList.add('hidden');
+  localStorage.setItem('sehat_install_dismissed', '1');
+}
+
+// iOS install hint (Safari doesn't fire beforeinstallprompt)
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+if (isIOS && !isStandalone && !localStorage.getItem('sehat_install_dismissed')) {
+  setTimeout(() => {
+    document.getElementById('ios-install-hint').classList.remove('hidden');
+  }, 2000);
+}
+</script>
+</body>
+</html>
